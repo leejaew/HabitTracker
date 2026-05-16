@@ -1,0 +1,43 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Local data (created at runtime) ---
+habits.json
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Replit-specific (kept out of the public repo so the project stays portable) ---
+.replit
+replit.nix
+.config/
+.cache/
+.pythonlibs/
+.local/
+.upm/
+attached_assets/
+replit.md
+.breakpoints

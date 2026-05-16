@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Habit Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f7f7f8;
+      --surface: #ffffff;
+      --border: #e4e4e7;
+      --text: #18181b;
+      --muted: #71717a;
+      --accent: #6366f1;
+      --accent-light: #eef2ff;
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --success: #22c55e;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Add form */
+    .add-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .add-form input {
+      flex: 1;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .add-form input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+    }
+
+    .add-form input.error {
+      border-color: var(--danger);
+    }
+
+    .add-form button {
+      height: 38px;
+      padding: 0 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity .15s;
+    }
+
+    .add-form button:hover { opacity: .88; }
+    .add-form button:active { opacity: .76; }
+    .add-form button:disabled { opacity: .5; cursor: not-allowed; }
+
+    .field-error {
+      font-size: 0.75rem;
+      color: var(--danger);
+      margin-top: -12px;
+      margin-bottom: 8px;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--text);
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 8px 16px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+      z-index: 100;
+      white-space: nowrap;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #toast.error {
+      background: var(--danger);
+    }
+
+    /* Habits list */
+    #habits-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 40px 0;
+    }
+
+    /* Habit card */
+    .habit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      transition: border-color .15s;
+    }
+
+    .habit-card.done {
+      border-color: var(--success);
+      background: #f0fdf4;
+    }
+
+    /* Checkbox */
+    .check-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color .15s, background .15s;
+    }
+
+    .check-btn:hover { border-color: var(--success); }
+
+    .habit-card.done .check-btn {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .check-btn svg { display: none; }
+    .habit-card.done .check-btn svg { display: block; }
+
+    /* Name + streak */
+    .habit-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .habit-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .habit-streak {
+      font-size: 0.73rem;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .habit-streak .fire {
+      color: #f97316;
+    }
+
+    /* Delete button */
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color .15s, background .15s;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover {
+      color: var(--danger);
+      background: var(--danger-light);
+    }
+
+    /* Today label */
+    .today-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    /* Loading skeleton */
+    .skeleton {
+      height: 58px;
+      background: var(--border);
+      border-radius: var(--radius);
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Habit Tracker</h1>
+      <p id="today-date"></p>
+    </header>
+
+    <form class="add-form" id="add-form" novalidate>
+      <input
+        type="text"
+        id="habit-input"
+        placeholder="New habit name…"
+        maxlength="60"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Habit name"
+      />
+      <button type="submit" id="add-btn">Add</button>
+    </form>
+    <div class="field-error" id="input-error" role="alert" aria-live="polite"></div>
+
+    <div class="today-label">Today</div>
+    <div id="habits-list">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const CSRF_TOKEN = {{ csrf_token | tojson }};
+
+    const habitsList = document.getElementById('habits-list');
+    const addForm = document.getElementById('add-form');
+    const habitInput = document.getElementById('habit-input');
+    const inputError = document.getElementById('input-error');
+    const addBtn = document.getElementById('add-btn');
+    const toastEl = document.getElementById('toast');
+
+    let toastTimer;
+
+    function showToast(msg, isError = false) {
+      clearTimeout(toastTimer);
+      toastEl.textContent = msg;
+      toastEl.className = 'show' + (isError ? ' error' : '');
+      toastTimer = setTimeout(() => { toastEl.className = ''; }, 2800);
+    }
+
+    function setInputError(msg) {
+      inputError.textContent = msg;
+      habitInput.classList.toggle('error', !!msg);
+    }
+
+    function formatDate(d) {
+      return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    }
+
+    document.getElementById('today-date').textContent = formatDate(new Date());
+
+    function streakLabel(streak) {
+      if (streak === 0) return 'No streak yet';
+      if (streak === 1) return '<span class="fire">🔥</span> 1 day streak';
+      return `<span class="fire">🔥</span> ${streak} day streak`;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function renderHabits(habits) {
+      if (!habits.length) {
+        habitsList.innerHTML = '<div class="empty-state">No habits yet — add one above!</div>';
+        return;
+      }
+
+      habitsList.innerHTML = habits.map(h => `
+        <div class="habit-card ${h.completed_today ? 'done' : ''}" data-name="${escapeHtml(h.name)}">
+          <button class="check-btn" aria-label="Toggle ${escapeHtml(h.name)}" data-action="toggle">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="habit-info">
+            <div class="habit-name" title="${escapeHtml(h.name)}">${escapeHtml(h.name)}</div>
+            <div class="habit-streak">${streakLabel(h.streak)}</div>
+          </div>
+          <button class="delete-btn" aria-label="Delete ${escapeHtml(h.name)}" data-action="delete">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M3 3l9 9M12 3l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function loadHabits() {
+      try {
+        const res = await fetch('/api/habits');
+        const data = await res.json();
+        renderHabits(data.habits);
+      } catch {
+        habitsList.innerHTML = '<div class="empty-state">Failed to load habits.</div>';
+      }
+    }
+
+    async function apiRequest(url, method, body) {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': CSRF_TOKEN,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      return res;
+    }
+
+    addForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setInputError('');
+
+      const name = habitInput.value.trim();
+
+      if (!name) {
+        setInputError('Please enter a habit name.');
+        habitInput.focus();
+        return;
+      }
+      if (name.length > 60) {
+        setInputError('Name must be 60 characters or fewer.');
+        return;
+      }
+
+      addBtn.disabled = true;
+      try {
+        const res = await apiRequest('/api/habits', 'POST', { name });
+        const data = await res.json();
+        if (!res.ok) {
+          setInputError(data.error || 'Could not add habit.');
+        } else {
+          habitInput.value = '';
+          renderHabits(data.habits);
+          showToast(`"${name}" added`);
+        }
+      } catch {
+        showToast('Network error. Try again.', true);
+      } finally {
+        addBtn.disabled = false;
+        habitInput.focus();
+      }
+    });
+
+    habitsList.addEventListener('click', async (e) => {
+      const card = e.target.closest('.habit-card');
+      if (!card) return;
+      const name = card.dataset.name;
+      const action = e.target.closest('[data-action]')?.dataset.action;
+      if (!action) return;
+
+      if (action === 'toggle') {
+        try {
+          const res = await apiRequest(`/api/habits/${encodeURIComponent(name)}/toggle`, 'POST');
+          const data = await res.json();
+          if (res.ok) renderHabits(data.habits);
+          else showToast(data.error || 'Error toggling habit.', true);
+        } catch {
+          showToast('Network error. Try again.', true);
+        }
+      }
+
+      if (action === 'delete') {
+        if (!confirm(`Remove "${name}"? This will delete all its history.`)) return;
+        try {
+          const res = await apiRequest(`/api/habits/${encodeURIComponent(name)}`, 'DELETE');
+          const data = await res.json();
+          if (res.ok) {
+            renderHabits(data.habits);
+            showToast(`"${name}" removed`);
+          } else {
+            showToast(data.error || 'Error removing habit.', true);
+          }
+        } catch {
+          showToast('Network error. Try again.', true);
+        }
+      }
+    });
+
+    habitInput.addEventListener('input', () => {
+      if (inputError.textContent) setInputError('');
+    });
+
+    loadHabits();
+  </script>
+</body>
+</html>
